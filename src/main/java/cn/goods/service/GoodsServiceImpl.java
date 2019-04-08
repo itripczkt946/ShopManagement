@@ -15,6 +15,7 @@ public class GoodsServiceImpl implements GoodsService {
     @Resource
     private GoodsMapper goodsMapper;
 
+
     @Override
     public List<GoodsSort> queryAllGoodsSort() {
         return goodsMapper.queryAllGoodsSort();
@@ -32,7 +33,6 @@ public class GoodsServiceImpl implements GoodsService {
 
     @Override
     public GoodsDetail queryGoodsDetailById(Integer id) {
-
         return goodsMapper.queryGoodsDetailById(id);
     }
 
