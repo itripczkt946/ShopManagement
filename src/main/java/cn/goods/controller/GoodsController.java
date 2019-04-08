@@ -21,6 +21,12 @@ public class GoodsController {
     @Resource
     private GoodsService goodsService;
 
+    //新增添加商品信息的方法
+    @RequestMapping("/saveAdd")
+    public String saveAdd(GoodsDetail detail) {
+        return "redirect:/goods/list";
+    }
+
     /**
      *分页查询商品详细信息列表
      * @param currPageNo 当前页码
