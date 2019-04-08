@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:p="http://www.springframework.org/schema/p"
+       xmlns:aop="http://www.springframework.org/schema/aop"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xmlns:tx="http://www.springframework.org/schema/tx"
+       xmlns:mvc="http://www.springframework.org/schema/mvc"
+       xsi:schemaLocation="http://www.springframework.org/schema/aop
+      http://www.springframework.org/schema/aop/spring-aop-3.2.xsd
+      http://www.springframework.org/schema/mvc
+      http://www.springframework.org/schema/mvc/spring-mvc-3.2.xsd
+      http://www.springframework.org/schema/beans
+      http://www.springframework.org/schema/beans/spring-beans.xsd
+      http://www.springframework.org/schema/tx
+      http://www.springframework.org/schema/tx/spring-tx-3.2.xsd
+      http://www.springframework.org/schema/context
+      http://www.springframework.org/schema/context/spring-context-3.2.xsd">
+
+    <!--5、START========为业务层添加声明式事务管理========START-->
+    <!--5.1 配置事务管理器-->
+    <bean id="txTranMgr" class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
+        <property name="dataSource" ref="dataSource"/>
+    </bean>
+    <!--5.2 创建声明式事务增强, 引入上面配置的事务管理器，并指定事务的属性-->
+    <tx:advice transaction-manager="txTranMgr" id="txAdvice">
+        <tx:attributes>
+            <!--为业务层的指定方法设置事务属性-->
+            <tx:method name="query*" propagation="SUPPORTS"/>
+            
+            <tx:method name="insert*" propagation="REQUIRED" rollback-for="Exception"/>
+            <tx:method name="update*" propagation="REQUIRED" rollback-for="Exception"/>
+            <tx:method name="del*" propagation="REQUIRED" rollback-for="Exception"/>
+        </tx:attributes>
+    </tx:advice>
+    <!--5.3 使用AOP将创建好的声明式事务增强织入到指定的连接点(业务层，即为业务层的所有方法设置它的事务传播机制)-->
+    <aop:config>
+        <!--1、定义连接点。 * cn.goods.service..*.*(..) 为cn.goods.service下的所有子包里面的所有类的所有方法设置为需要进行事务增强的连接点-->
+        <aop:pointcut id="pointcut" expression="execution(* cn.goods.service..*.*(..))"/>
+        <!--将创建好的声明式事务增强织入到指定的连接点中-->
+        <aop:advisor advice-ref="txAdvice" pointcut-ref="pointcut"/>
+    </aop:config>
+    <!--5、END========为业务层添加声明式事务管理========END-->
+
+    <!--4、创建数据源对象，即dataSource-->
+    <bean id="dataSource" class="org.apache.commons.dbcp.BasicDataSource">
+        <property name="driverClassName" value="com.mysql.jdbc.Driver"/>
+        <property name="url" value="jdbc:mysql://localhost:3306/shopmanagement-t222"/>
+        <property name="username" value="root"/>
+        <property name="password" value="root"/>
+    </bean>
+
+    <!--3、创建SqlSessionFactoryBean的实例对象-->
+    <bean id="sqlSessionFactory" class="org.mybatis.spring.SqlSessionFactoryBean">
+        <!--3.1 引入数据源对象-->
+        <property name="dataSource" ref="dataSource"/>
+        <!--3.2 引入mybatis的配置文件-->
+        <property name="configLocation" value="classpath:mybatis-config.xml"/>
+        <!--3.3 初始化Mapper映射文件-->
+        <property name="mapperLocations">
+            <list>
+                <value>classpath:cn/goods/dao/*.xml</value>
+            </list>
+        </property>
+    </bean>
+
+    <!--2、添加MapperScannerConfigurer配置，好处有两个
+        1、自动为cn.goods.dao下的接口创建接口实现类的对象。
+        2、并且为接口实现类注入其所依赖的SqlSessionFactoryBean的实例对象
+    -->
+    <bean class="org.mybatis.spring.mapper.MapperScannerConfigurer">
+        <property name="basePackage" value="cn.goods.dao"/>
+    </bean>
+
+    <!--对cn.goods.service包中的所有类进行扫描，让当前类中的spring注解生效。
+    1、简化Service层的配置-->
+    <context:component-scan base-package="cn.goods.service"/>
+
+</beans>

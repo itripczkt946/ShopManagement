@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="cn.goods.dao.GoodsMapper">
+
+    <resultMap id="detailMap" type="GoodsDetail">
+        <!--property是属性名， column 列名-->
+        <id property="id" column="id"></id>
+        <result property="name" column="name"/>
+        <result property="address" column="address"/>
+        <result property="price" column="price"/>
+        <result property="remaining" column="remaining"/>
+        <result property="createDate" column="createDate"/>
+        <!--javaType为当前属性的类型，  column 外键列名-->
+        <association property="goodsSort" javaType="GoodsSort" column="sortId">
+            <result property="name" column="sname"/>
+        </association>
+    </resultMap>
+
+    <!--parameterType="" 入参的类型。   resultType 返回值的类型 -->
+    <!--查询所有的商品分类-->
+    <select id="queryAllGoodsSort" resultType="GoodsSort">
+        SELECT  `id`, `name`  FROM `goods_sort`
+    </select>
+
+    <!--分页查询所有或指定类别的商品信息，并按编号降序排序-->
+    <select id="queryAllGoodsDetailPage" resultMap="detailMap">
+        SELECT d.id,d.name,s.name as sname,d.address,d.createDate,d.price,d.remaining
+           FROM `goods_detail` d,`goods_sort` s WHERE d.sortId = s.id
+        <if test="sortId != null and sortId != 0">
+            and s.id = #{sortId}
+        </if>
+        order by d.id desc
+       <if test="startPos != null and pageSize != null">
+           limit #{startPos}, #{pageSize}
+       </if>
+    </select>
+
+    <!--查询总的记录数-->
+    <select id="queryCount" resultType="java.lang.Integer">
+        SELECT count(1)  FROM `goods_detail`
+       <where>
+           <if test="sortId != null and sortId != 0">
+               and sortId = #{sortId}
+           </if>
+       </where>
+    </select>
+
+    <!--根据商品编号查询商品详细信息-->
+    <select id="queryGoodsDetailById" resultMap="detailMap">
+        SELECT d.id,d.name,s.name as sname,d.address,d.createDate,d.price,d.remaining
+        FROM `goods_detail` d,`goods_sort` s WHERE d.sortId = s.id
+        <if test="id != null and id != 0">
+            and d.id = #{id}
+        </if>
+    </select>
+
+    <!--修改商品剩余数量-->
+    <update id="updateGoodsDetailById" parameterType="GoodsDetail">
+        UPDATE `goods_detail`
+        <set>
+            <if test="sortId != null"> `sortId` = #{sortId},</if>
+            <if test="name != null"> `name` = #{name},</if>
+            <if test="address != null"> `address` = #{address},</if>
+            <if test="price != null"> `price` = #{price},</if>
+            <if test="createDate != null"> `createDate` = #{createDate},</if>
+            <if test="remaining != null"> `remaining` = #{remaining},</if>
+        </set>
+        WHERE `id` = #{id}
+    </update>
+
+    <!--删除-->
+    <delete id="deleteGoodsDetail">
+        delete from `goods_detail` WHERE `id` = #{id}
+    </delete>
+
+    <!--新增-->
+    <insert id="insertGoodsDetail" parameterType="GoodsDetail">
+        INSERT INTO `goods_detail`
+        (`sortId`,
+         `name`,
+         `address`,
+         `price`,
+         `createDate`,
+         `remaining`)
+        VALUES ( #{sortId},
+                #{name},
+                #{address},
+                #{price},
+                #{createDate},
+                #{remaining})
+    </insert>
+
+</mapper>
